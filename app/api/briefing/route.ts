@@ -50,6 +50,10 @@ async function fetchClaudeResponse(prompt: string) {
 }
 
 export async function POST(request: NextRequest) {
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return NextResponse.json({ message: "Bypassing build execution" });
+  }
+
   const body = await request.json().catch(() => null);
   const sector = typeof body?.sector === 'string' ? body.sector.trim() : '';
   const deepDive = body?.deepDive === true;
