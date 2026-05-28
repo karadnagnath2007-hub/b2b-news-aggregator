@@ -1,0 +1,8 @@
+{
+  "ad_settings": { "disable_all_ads_for_premium": true },
+  "placements": {
+    "text_sponsor_line": { "type": "direct", "active": true, "content": { "text": "Sponsor: Optimize logistics with FlexChain AI.", "link": "#" } },
+    "native_sponsored_card": { "type": "adsense", "active": true, "content": {} },
+    "banner_ad": { "type": "direct", "active": true, "content": { "image_url": "/banner.png", "link": "#" } }
+  }
+}
