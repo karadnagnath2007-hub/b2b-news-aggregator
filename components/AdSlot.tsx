@@ -1,4 +1,4 @@
-import adsConfig from '@/config/ads-config.json';
+import adsConfig from '../config/ads-config.json';
 
 type AdPlacementKey = keyof typeof adsConfig.placements;
 
