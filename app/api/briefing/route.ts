@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       assertPremiumUser(user);
     } catch (error) {
       const status = (error as any).status ?? 403;
-      return NextResponse.json({ error: error.message }, { status });
+      return NextResponse.json({ error: (error as any).message }, { status });
     }
   }
 
