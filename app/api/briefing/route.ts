@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { getUserFromRequest, assertPremiumUser } from '../../../lib/auth';
 
@@ -48,7 +48,7 @@ async function fetchClaudeResponse(prompt: string) {
   return (data.completion ?? data.response ?? '').trim();
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   if (process.env.NEXT_PHASE === 'phase-production-build') {
     return NextResponse.json({ message: "Bypassing build execution" });
   }
