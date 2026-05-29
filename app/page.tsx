@@ -30,7 +30,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ sector: activeSector, deepDive: false }),
+        body: JSON.stringify({ sector: activeSector.toLowerCase().trim(), deepDive: false }),
       });
 
       const data = await response.json();

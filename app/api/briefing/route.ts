@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { getUserFromRequest, assertPremiumUser } from '../../../lib/auth';
 
@@ -48,20 +48,31 @@ async function fetchClaudeResponse(prompt: string) {
   return (data.completion ?? data.response ?? '').trim();
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   if (process.env.NEXT_PHASE === 'phase-production-build') {
     return NextResponse.json({ message: "Bypassing build execution" });
   }
 
-  const body = await request.json().catch(() => null);
-  const bodySector = typeof body?.sector === 'string' ? body.sector.trim() : '';
-  const requestUrl = new URL(request.url);
-  const querySector = requestUrl.searchParams.get('sector')?.trim() ?? '';
-  const sector = bodySector || querySector;
+  const body = await request.json();
+  const sector = (body.sector as string)?.toLowerCase().trim();
   const deepDive = body?.deepDive === true;
 
-  if (!sector) {
-    return NextResponse.json({ error: 'Sector is required.' }, { status: 400 });
+  const validSectors = [
+    'logistics',
+    'fintech',
+    'manufacturing',
+    'energy',
+    'supply-chain',
+    'medical-compliance',
+    'heavy-manufacturing',
+    'energy-commodities',
+  ];
+
+  if (!sector || !validSectors.includes(sector)) {
+    return NextResponse.json(
+      { error: `Unknown sector: ${sector}` },
+      { status: 400 }
+    );
   }
 
   const user = await getUserFromRequest(request);
