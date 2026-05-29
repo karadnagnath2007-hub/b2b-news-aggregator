@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { getUserFromRequest, assertPremiumUser } from '../../../lib/auth';
 
@@ -48,14 +48,15 @@ async function fetchClaudeResponse(prompt: string) {
   return (data.completion ?? data.response ?? '').trim();
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   if (process.env.NEXT_PHASE === 'phase-production-build') {
     return NextResponse.json({ message: "Bypassing build execution" });
   }
 
   const body = await request.json().catch(() => null);
   const bodySector = typeof body?.sector === 'string' ? body.sector.trim() : '';
-  const querySector = request.nextUrl.searchParams.get('sector')?.trim() ?? '';
+  const requestUrl = new URL(request.url);
+  const querySector = requestUrl.searchParams.get('sector')?.trim() ?? '';
   const sector = bodySector || querySector;
   const deepDive = body?.deepDive === true;
 
