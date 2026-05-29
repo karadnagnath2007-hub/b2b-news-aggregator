@@ -1,6 +1,58 @@
+"use client";
+
+import { useState } from 'react';
+
 export default function Home() {
   const user = { name: 'Maya Singh', isPremium: false };
   const premiumCardBlur = !user.isPremium ? 'blur-sm filter' : '';
+  const [activeSector, setActiveSector] = useState('Logistics');
+  const [loading, setLoading] = useState(false);
+  const [briefing, setBriefing] = useState(
+    'Generate a sector briefing to see the latest AI insights appear here.'
+  );
+  const [latestAlert, setLatestAlert] = useState(
+    'Supply chain tensions heat up across Asia-Pacific logistics.'
+  );
+  const [marketNote, setMarketNote] = useState(
+    'Energy futures shift as renewables drive infrastructure bids.'
+  );
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const sectors = ['Logistics', 'Fintech', 'Manufacturing', 'Energy'];
+
+  const handleGenerateBriefing = async () => {
+    setErrorMessage('');
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/briefing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sector: activeSector, deepDive: false }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to generate briefing.');
+      }
+
+      const generatedBriefing = data.briefing ?? '';
+      setBriefing(generatedBriefing || 'The briefing returned no content.');
+
+      const sentences = generatedBriefing.split(/(?<=[.?!])\s+/).filter(Boolean);
+      setLatestAlert(sentences[0] || 'The briefing did not return an alert.');
+      setMarketNote(
+        sentences[sentences.length - 1] || 'The briefing did not return a market note.'
+      );
+    } catch (error) {
+      setErrorMessage((error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-cream-paper text-stone-900">
@@ -24,10 +76,16 @@ export default function Home() {
 
         <section className="mb-8 rounded-3xl border border-hairline-stone bg-white p-6 shadow-sm">
           <div className="flex flex-wrap gap-3 text-sm font-medium text-stone-600">
-            {['Logistics', 'Fintech', 'Manufacturing', 'Energy'].map((label) => (
+            {sectors.map((label) => (
               <button
                 key={label}
-                className="rounded-full border border-stone-200 bg-cream-paper px-4 py-2 transition hover:border-stone-400 hover:bg-stone-50"
+                type="button"
+                onClick={() => setActiveSector(label)}
+                className={`rounded-full border px-4 py-2 transition ${
+                  activeSector === label
+                    ? 'border-stone-900 bg-stone-950 text-white'
+                    : 'border-stone-200 bg-cream-paper text-stone-700 hover:border-stone-400 hover:bg-stone-50'
+                }`}
               >
                 {label}
               </button>
@@ -59,23 +117,34 @@ export default function Home() {
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1 text-sm text-stone-500">
+                  <p>Selected sector: {activeSector}</p>
                   <p>Analysis depth: Strategic</p>
-                  <p>Focus: Growth, risk, supply-chain signals</p>
                 </div>
-                <button className="inline-flex items-center justify-center rounded-full bg-stone-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-stone-800">
-                  Generate Sector Briefing
+                <button
+                  type="button"
+                  onClick={handleGenerateBriefing}
+                  disabled={loading}
+                  className="inline-flex items-center justify-center rounded-full bg-stone-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-400"
+                >
+                  {loading ? 'Generating...' : 'Generate Sector Briefing'}
                 </button>
               </div>
+
+              {errorMessage ? (
+                <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {errorMessage}
+                </p>
+              ) : null}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-3xl border border-hairline-stone bg-stone-50 p-5">
                 <p className="text-sm uppercase tracking-[0.28em] text-stone-500">Latest alert</p>
-                <p className="mt-4 text-lg font-semibold text-stone-900">Supply chain tensions heat up across Asia-Pacific logistics.</p>
+                <p className="mt-4 text-lg font-semibold text-stone-900">{latestAlert}</p>
               </div>
               <div className="rounded-3xl border border-hairline-stone bg-stone-50 p-5">
                 <p className="text-sm uppercase tracking-[0.28em] text-stone-500">Market note</p>
-                <p className="mt-4 text-lg font-semibold text-stone-900">Energy futures shift as renewables drive infrastructure bids.</p>
+                <p className="mt-4 text-lg font-semibold text-stone-900">{marketNote}</p>
               </div>
             </div>
           </article>

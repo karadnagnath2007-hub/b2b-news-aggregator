@@ -1,9 +1,8 @@
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { getUserFromRequest, assertPremiumUser } from '../../../lib/auth';
-
-export const runtime = 'nodejs';
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/complete';
 
