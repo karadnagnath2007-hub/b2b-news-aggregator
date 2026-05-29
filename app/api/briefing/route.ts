@@ -54,7 +54,9 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
-  const sector = typeof body?.sector === 'string' ? body.sector.trim() : '';
+  const bodySector = typeof body?.sector === 'string' ? body.sector.trim() : '';
+  const querySector = request.nextUrl.searchParams.get('sector')?.trim() ?? '';
+  const sector = bodySector || querySector;
   const deepDive = body?.deepDive === true;
 
   if (!sector) {
@@ -72,8 +74,8 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const industry = await prisma.industry.findUnique({
-    where: { name: sector },
+  const industry = await prisma.industry.findFirst({
+    where: { name: { equals: sector, mode: 'insensitive' } },
   });
 
   if (!industry) {
