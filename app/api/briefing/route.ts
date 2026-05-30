@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import { prisma } from '../../../lib/prisma'
 import { getUserFromRequest, assertPremiumUser } from '../../../lib/auth'
 
 export const dynamic = 'force-dynamic'
-
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/complete'
 
 async function buildPrompt(
   sector: string,
@@ -22,34 +21,16 @@ async function buildPrompt(
   return `You are an AI analyst for a B2B intelligence newsroom. ${focus} Do not include markdown, bullet points, or labels in the output.\n\nSector: ${sector}\n\nArticles:\n${articleText}\n\nAssistant:`
 }
 
-async function fetchClaudeResponse(prompt: string) {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+async function fetchGeminiResponse(prompt: string) {
+  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
-    throw new Error('Anthropic API key is not configured in environment variables.')
+    throw new Error('Gemini API key is not configured in environment variables.')
   }
 
-  const response = await fetch(ANTHROPIC_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'claude-3.5-mini',
-      prompt,
-      max_tokens_to_sample: 600,
-      temperature: 0.2,
-      stop_sequences: ['\n\nHuman:'],
-    }),
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`Anthropic request failed: ${response.status} ${errorText}`)
-  }
-
-  const data = await response.json()
-  return (data.completion ?? data.response ?? '').trim()
+  const genAI = new GoogleGenerativeAI(apiKey)
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const result = await model.generateContent(prompt)
+  return result.response.text().trim()
 }
 
 export async function POST(request: NextRequest) {
@@ -113,7 +94,7 @@ export async function POST(request: NextRequest) {
   }
 
   const prompt = await buildPrompt(sector, articles, deepDive)
-  const briefing = await fetchClaudeResponse(prompt)
+  const briefing = await fetchGeminiResponse(prompt)
   const sentences = briefing.split(/(?<=[.?!])\s+/).filter(Boolean)
   const alert = sentences[0] || ''
   const marketNote = sentences[sentences.length - 1] || ''
